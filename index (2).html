@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirection en cours...</title>
+</head>
+<body>
+    <p>Recherche du commerce...</p>
+
+    <script>
+        // Remplacez le lien ci-dessous par votre lien Google Sheets (.TSV)
+        const urlBaseDeDonnees = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSczZlwA3mitoh7y8tdLsuv6yCdUXaWBThs0OALXv5GIuLJM2n2vNOMRNplJipkC-GOuDp9FhdHsiWA/pub?output=tsv";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const carteId = urlParams.get('c');
+
+        if (carteId) {
+            fetch(urlBaseDeDonnees)
+                .then(response => response.text())
+                .then(texte => {
+                    const lignes = texte.split('\n');
+                    let lienTrouve = "";
+
+                    for (let i = 1; i < lignes.length; i++) {
+                        const colonnes = lignes[i].split('\t');
+                        const idLigne = colonnes[0] ? colonnes[0].trim() : "";
+                        
+                        if (idLigne === carteId) {
+                            lienTrouve = colonnes[2] ? colonnes[2].trim() : "";
+                            break;
+                        }
+                    }
+
+                    if (lienTrouve && lienTrouve.startsWith("http")) {
+                        window.location.replace(lienTrouve);
+                    } else {
+                        document.body.innerHTML = "<h1>Cette carte n'est pas encore configurée.</h1>";
+                    }
+                })
+                .catch(erreur => {
+                    document.body.innerHTML = "<h1>Erreur de connexion à la base de données.</h1>";
+                });
+        } else {
+            document.body.innerHTML = "<h1>Erreur : Aucune carte scannée.</h1>";
+        }
+    </script>
+</body>
+</html>
