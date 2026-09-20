@@ -17,7 +17,7 @@
             fetch(urlBaseDeDonnees + "&t=" + new Date().getTime())
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error("Problème lors du chargement des données");
+                        throw new Error("Problème de chargement");
                     }
                     return response.text();
                 })
@@ -25,14 +25,13 @@
                     const lignes = texte.split(/\r?\n/);
                     let lienFinal = "";
 
-                    // i = 1 permet d'ignorer la 1ère ligne (l'en-tête) et lire les cartes à partir de la ligne 2
+                    // i = 1 permet d'ignorer la ligne d'en-tête du Google Sheet
                     for (let i = 1; i < lignes.length; i++) {
                         if (!lignes[i].trim()) continue;
                         
                         const colonnes = lignes[i].split('\t');
                         const idLigne = colonnes[0] ? colonnes[0].trim() : "";
 
-                        // Vérification exacte du numéro de carte
                         if (idLigne === carteId.trim()) {
                             for (let j = colonnes.length - 1; j >= 0; j--) {
                                 const valeur = colonnes[j] ? colonnes[j].trim() : "";
