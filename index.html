@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <title>Redirection en cours...</title>
@@ -8,29 +8,36 @@
     <p>Recherche du commerce en cours...</p>
 
     <script>
-        const urlBaseDeDonnees = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSblQHu62cGpGf_U39E0AFcYVGA17N0gcv4kyBbTdyOlLnQBbjpt_ig_0u4zpqdwWmdVMoGFk_DSOW4/pub?gid=0&single=true&output=tsv";
+        const urlBaseDeDonnees = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRr0ngpLN1TuzV2hDMMnykuV7HKzNcR87hwdpYWmC36DTcbnRTIqHI4DDcOC0kKNVRqU4JJf2vY8YGp/pub?gid=0&single=true&output=tsv";
 
         const urlParams = new URLSearchParams(window.location.search);
         const carteId = urlParams.get('c');
 
         if (carteId) {
             fetch(urlBaseDeDonnees + "&t=" + new Date().getTime())
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Problème lors du chargement des données");
+                    }
+                    return response.text();
+                })
                 .then(texte => {
                     const lignes = texte.split(/\r?\n/);
                     let lienFinal = "";
 
                     for (let i = 0; i < lignes.length; i++) {
                         if (!lignes[i].trim()) continue;
+                        
                         const colonnes = lignes[i].split('\t');
                         const idLigne = colonnes[0] ? colonnes[0].trim() : "";
 
-                        // Si on trouve la ligne de la carte recherchée
+                        // Si on trouve l'identifiant recherché
                         if (idLigne === carteId.trim()) {
-                            // On cherche le lien HTTP dans n'importe laquelle des dernières colonnes de la ligne
+                            // Parcours de la fin vers le début pour extraire le dernier lien de la ligne
                             for (let j = colonnes.length - 1; j >= 0; j--) {
-                                if (colonnes[j] && colonnes[j].trim().startsWith("http")) {
-                                    lienFinal = colonnes[j].trim();
+                                const valeur = colonnes[j] ? colonnes[j].trim() : "";
+                                if (valeur.startsWith("http://") || valeur.startsWith("https://")) {
+                                    lienFinal = valeur;
                                     break;
                                 }
                             }
@@ -41,10 +48,11 @@
                     if (lienFinal) {
                         window.location.replace(lienFinal);
                     } else {
-                        document.body.innerHTML = "<h1>Erreur : La carte " + carteId + " existe mais aucun lien valide n'a été trouvé dans la ligne.</h1>";
+                        document.body.innerHTML = "<h1>Erreur : La carte " + carteId + " existe, mais aucun lien valide n'a été trouvé.</h1>";
                     }
                 })
                 .catch(erreur => {
+                    console.error(erreur);
                     document.body.innerHTML = "<h1>Erreur de connexion au tableur.</h1>";
                 });
         } else {
