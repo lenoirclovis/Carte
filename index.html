@@ -25,15 +25,15 @@
                     const lignes = texte.split(/\r?\n/);
                     let lienFinal = "";
 
-                    for (let i = 0; i < lignes.length; i++) {
+                    // i = 1 permet d'ignorer la 1ère ligne (l'en-tête) et lire les cartes à partir de la ligne 2
+                    for (let i = 1; i < lignes.length; i++) {
                         if (!lignes[i].trim()) continue;
                         
                         const colonnes = lignes[i].split('\t');
                         const idLigne = colonnes[0] ? colonnes[0].trim() : "";
 
-                        // Si on trouve l'identifiant recherché
+                        // Vérification exacte du numéro de carte
                         if (idLigne === carteId.trim()) {
-                            // Parcours de la fin vers le début pour extraire le dernier lien de la ligne
                             for (let j = colonnes.length - 1; j >= 0; j--) {
                                 const valeur = colonnes[j] ? colonnes[j].trim() : "";
                                 if (valeur.startsWith("http://") || valeur.startsWith("https://")) {
