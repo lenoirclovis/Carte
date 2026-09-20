@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <title>Redirection en cours...</title>
@@ -15,22 +15,29 @@
 
         if (carteId) {
             fetch(urlBaseDeDonnees + "&t=" + new Date().getTime())
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Problème de connexion au tableur");
+                    }
+                    return response.text();
+                })
                 .then(texte => {
                     const lignes = texte.split(/\r?\n/);
                     let lienFinal = "";
 
-                    for (let i = 0; i < lignes.length; i++) {
+                    // i = 1 saute la ligne 1 (les en-têtes : n° de carte, commerce, etc.)
+                    for (let i = 1; i < lignes.length; i++) {
                         if (!lignes[i].trim()) continue;
+                        
                         const colonnes = lignes[i].split('\t');
                         const idLigne = colonnes[0] ? colonnes[0].trim() : "";
 
-                        // Si on trouve la ligne de la carte recherchée
                         if (idLigne === carteId.trim()) {
-                            // On cherche le lien HTTP dans n'importe laquelle des dernières colonnes de la ligne
+                            // Cherche le lien HTTP/HTTPS dans les colonnes (colonne 5 - lien Google)
                             for (let j = colonnes.length - 1; j >= 0; j--) {
-                                if (colonnes[j] && colonnes[j].trim().startsWith("http")) {
-                                    lienFinal = colonnes[j].trim();
+                                const valeur = colonnes[j] ? colonnes[j].trim() : "";
+                                if (valeur.startsWith("http://") || valeur.startsWith("https://")) {
+                                    lienFinal = valeur;
                                     break;
                                 }
                             }
@@ -45,6 +52,7 @@
                     }
                 })
                 .catch(erreur => {
+                    console.error(erreur);
                     document.body.innerHTML = "<h1>Erreur de connexion au tableur.</h1>";
                 });
         } else {
