@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <title>Redirection en cours...</title>
@@ -8,24 +8,30 @@
     <p>Recherche du commerce...</p>
 
     <script>
-        // Remplacez le lien ci-dessous par votre lien Google Sheets (.TSV)
         const urlBaseDeDonnees = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRr0ngpLN1TuzV2hDMMnykuV7HKzNcR87hwdpYWmC36DTcbnRTIqHI4DDcOC0kKNVRqU4JJf2vY8YGp/pub?gid=0&single=true&output=tsv";
 
         const urlParams = new URLSearchParams(window.location.search);
         const carteId = urlParams.get('c');
 
         if (carteId) {
-            fetch(urlBaseDeDonnees)
+            // &t= évite le cache de Google Sheets
+            fetch(urlBaseDeDonnees + "&t=" + new Date().getTime())
                 .then(response => response.text())
                 .then(texte => {
-                    const lignes = texte.split('\n');
+                    const lignes = texte.split(/\r?\n/);
                     let lienTrouve = "";
 
+                    // i = 1 permet d'ignorer la ligne d'en-tête (ID_Carte, Nom_Commerce...)
                     for (let i = 1; i < lignes.length; i++) {
+                        if (!lignes[i].trim()) continue;
+                        
                         const colonnes = lignes[i].split('\t');
+                        
+                        // Colonne A = colonnes[0] (N° de carte)
                         const idLigne = colonnes[0] ? colonnes[0].trim() : "";
                         
-                        if (idLigne === carteId) {
+                        if (idLigne === carteId.trim()) {
+                            // Colonne C = colonnes[2] (Lien Google)
                             lienTrouve = colonnes[2] ? colonnes[2].trim() : "";
                             break;
                         }
@@ -34,10 +40,11 @@
                     if (lienTrouve && lienTrouve.startsWith("http")) {
                         window.location.replace(lienTrouve);
                     } else {
-                        document.body.innerHTML = "<h1>Cette carte n'est pas encore configurée.</h1>";
+                        document.body.innerHTML = "<h1>Cette carte (" + carteId + ") n'est pas encore configurée.</h1>";
                     }
                 })
                 .catch(erreur => {
+                    console.error(erreur);
                     document.body.innerHTML = "<h1>Erreur de connexion à la base de données.</h1>";
                 });
         } else {
